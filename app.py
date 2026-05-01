@@ -16,8 +16,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
-
-# データベースのモデル定義
 class Event(db.Model):
     __tablename__ = 'events'
     id = db.Column(db.String(8), primary_key=True)
@@ -30,6 +28,10 @@ class Answer(db.Model):
     event_id = db.Column(db.String(8), db.ForeignKey('events.id'))
     participant_name = db.Column(db.String(100))
     answers_json = db.Column(db.Text)
+
+with app.app_context():
+    # Renderなどgunicorn起動時にもテーブルが作成されるようにする
+    db.create_all()
 
 @app.route('/')
 def index():
@@ -96,8 +98,5 @@ def submit_answer(event_id):
     return jsonify({'success': True})
 
 if __name__ == '__main__':
-    with app.app_context():
-        # テーブルが存在しない場合のみ作成
-        db.create_all()
     # ローカル開発用サーバーの起動
     app.run(debug=True, port=3000)
