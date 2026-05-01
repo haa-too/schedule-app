@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>スケジューる</title>
+    <!-- Google Fonts for rounded text -->
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        :root {
+            --primary-purple: #9b84ed;
+            --primary-teal: #51c4c1;
+            --bg-gradient: linear-gradient(135deg, #fce4ec 0%, #e0f7fa 100%);
+            --text-dark: #4a4a4a;
+            --text-gray: #888888;
+            --border-light: #f4e1f0;
+            --white: #ffffff;
+            --box-shadow: 0 10px 30px rgba(155, 132, 237, 0.15);
+            --ok-color: #4CAF50;
+            --maybe-color: #FFC107;
+            --no-color: #F44336;
+        }
+        
+        body {
+            font-family: 'Zen Maru Gothic', 'Hiragino Rounded', 'Hiragino Kaku Gothic ProN', sans-serif;
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-dark);
+            margin: 0;
+            padding: 20px 10px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .header-logo {
+            position: absolute;
+            top: 20px;
+            left: 30px;
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--primary-purple);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background: var(--white);
+            padding: 40px 30px;
+            border-radius: 24px;
+            box-shadow: var(--box-shadow);
+            margin-top: 60px; /* Space for logo */
+            position: relative;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+        .section.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Labels & Icons */
+        .field-label {
+            font-weight: 700;
+            font-size: 1.05rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #555;
+        }
+        .field-note {
+            font-size: 0.85rem;
+            color: var(--text-gray);
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Inputs */
+        .input-group {
+            margin-bottom: 30px;
+        }
+        
+        .date-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid var(--border-light);
+            border-radius: 9999px;
+            font-size: 1rem;
+            font-family: inherit;
+            color: var(--text-dark);
+            outline: none;
+            transition: all 0.2s;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus {
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 0 4px rgba(155, 132, 237, 0.1);
+        }
+        
+        /* Specific input styles */
+        #event-title { margin-bottom: 0; }
+        
+        .clear-btn {
+            background: none;
+            border: none;
+            color: var(--text-gray);
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            font-family: inherit;
+            font-size: 0.95rem;
+            padding: 10px;
+            border-radius: 20px;
+        }
+        .clear-btn:hover { background: #f5f5f5; color: var(--text-dark); }
+
+        /* Period Info Box */
+        .period-info-box {
+            background-color: #f8f9fa;
+            border-radius: 16px;
+            padding: 16px 20px;
+            font-weight: 700;
+            color: #444;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Primary Button */
+        button.primary-btn {
+            background: linear-gradient(to right, var(--primary-purple), var(--primary-teal));
+            color: white;
+            border: none;
+            padding: 18px 24px;
+            border-radius: 9999px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: inherit;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 6px 15px rgba(81, 196, 193, 0.3);
+            margin-top: 10px;
+        }
+        button.primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(81, 196, 193, 0.4);
+        }
+        button.primary-btn:active {
+            transform: translateY(0);
+        }
+        button.primary-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* --- Event View Styles --- */
+        .event-title-display {
+            font-size: 1.6rem;
+            text-align: center;
+            color: var(--primary-purple);
+            margin-bottom: 24px;
+            font-weight: 900;
+        }
+
+        .schedule-grid-wrapper {
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 2px solid var(--border-light);
+            margin-bottom: 24px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 500px;
+            font-size: 0.95rem;
+        }
+        th, td {
+            border: 1px solid var(--border-light);
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 700;
+            color: #555;
+        }
+        th { background: #fafafa; }
+        td.slot {
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s;
+            height: 55px;
+            font-size: 1.5rem;
+        }
+        td.slot:active { transform: scale(0.9); }
+        
+        .heat-0 { background-color: rgba(76, 175, 80, 0); }
+        .heat-1 { background-color: rgba(76, 175, 80, 0.15); }
+        .heat-2 { background-color: rgba(76, 175, 80, 0.35); }
+        .heat-3 { background-color: rgba(76, 175, 80, 0.55); }
+        .heat-4 { background-color: rgba(76, 175, 80, 0.75); }
+        .heat-max { background-color: rgba(76, 175, 80, 0.95); color: white; }
+
+        .copy-link-box {
+            background: #f8f9fa;
+            border: 2px dashed #ccc;
+            padding: 16px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .copy-link-box:hover { background: #f1f3f5; border-color: var(--primary-purple); }
+        
+        .participant-input {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .participant-input button {
+            background: var(--text-dark);
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            padding: 0 24px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header-logo">
+    🗓️ スケジューる
+</div>
+
+<div class="container">
+    <!-- View 1: Create Event -->
+    <div id="view-create" class="section active">
+        
+        <div class="input-group">
+            <div class="field-label">✏️ イベント名（省略可）</div>
+            <input type="text" id="event-title" placeholder="イベント名を入力">
+        </div>
+
+        <div class="input-group">
+            <div class="field-label">📅 候補の日付を選ぶ</div>
+            <div class="date-input-wrapper">
+                <input type="text" id="date-input" placeholder="タップしてカレンダーから日付を選ぶ 🗓️" readonly>
+                <button class="clear-btn" onclick="clearDates()">🧹 クリア</button>
+            </div>
+            <div class="field-note">📌 カレンダー上で日付をタップするたびに追加 / 削除されます（最大31日）</div>
+        </div>
+
+        <div class="input-group">
+            <div class="field-label">🕐 時限構成</div>
+            <div class="period-info-box">
+                📚 1限・2限・昼休み・3限・4限・5限・6限（全7コマ）
+            </div>
+            <div class="field-note">🕑 時限は固定です。参加者は各コマに◎△✕を選択できます</div>
+        </div>
+
+        <button class="primary-btn" onclick="handleCreateEvent()">🚀 イベントを作成する</button>
+    </div>
+
+    <!-- View 2: Event Details -->
+    <div id="view-event" class="section">
+        <div class="event-title-display" id="display-title">読み込み中...</div>
+        
+        <div class="copy-link-box" onclick="copyUrl()">
+            <div style="font-weight: 700; margin-bottom: 8px; color: var(--primary-purple);">🔗 リンクをコピーして共有</div>
+            <small style="color:#888; word-break: break-all;" id="share-url"></small>
+        </div>
+
+        <div class="input-group">
+            <div class="field-label">👤 あなたの名前</div>
+            <div class="participant-input">
+                <input type="text" id="participant-name" placeholder="名前を入力して回答を開始">
+                <button onclick="loadMyAnswers()">回答開始</button>
+            </div>
+        </div>
+
+        <div class="field-note" style="justify-content: center; margin-bottom: 16px;">
+            👆 コマをタップして参加可否を選択しよう！<br>
+            (1回 ◎ → 2回 △ → 3回 ✕ → 4回 未選択)
+        </div>
+
+        <div class="schedule-grid-wrapper">
+            <table id="schedule-table">
+                <!-- Generated by JS -->
+            </table>
+        </div>
+        
+        <button class="primary-btn" onclick="saveAnswers()">💾 回答を保存する</button>
+
+        <div style="margin-top: 30px; background: #f8f9fa; padding: 20px; border-radius: 16px;">
+            <h3 style="margin-top:0; font-size: 1.1rem;">回答済みのメンバー</h3>
+            <div id="participants-container"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/ja.js"></script>
+<script>
+    const PERIODS = ['1限', '2限', '昼休み', '3限', '4限', '5限', '6限'];
+    const ANSWER_TYPES = ['', 'ok', 'maybe', 'no'];
+    const ANSWER_SYMBOLS = { '': '', 'ok': '◎', 'maybe': '△', 'no': '✕' };
+    
+    let fpInstance = null;
+    let currentEventId = null;
+    let eventData = null;
+    let allAnswers = [];
+    let myAnswers = {}; 
+    let myName = "";
+
+    function init() {
+        const path = window.location.pathname;
+        if (path.startsWith('/event/')) {
+            currentEventId = path.split('/')[2];
+            document.getElementById('view-create').classList.remove('active');
+            document.getElementById('view-event').classList.add('active');
+            document.getElementById('share-url').innerText = window.location.href;
+            fetchEventData();
+        } else {
+            const dateInput = document.getElementById("date-input");
+            fpInstance = flatpickr(dateInput, {
+                mode: "multiple",
+                locale: "ja",
+                dateFormat: "Y-m-d",
+                minDate: "today",
+                disableMobile: true 
+            });
+        }
+        
+        const savedName = localStorage.getItem('schedule_name');
+        if (savedName) {
+            document.getElementById('participant-name').value = savedName;
+            myName = savedName;
+        }
+    }
+
+    function clearDates() {
+        const inst = Array.isArray(fpInstance) ? fpInstance[0] : fpInstance;
+        if(inst) inst.clear();
+    }
+
+    async function handleCreateEvent() {
+        console.log("handleCreateEvent() called!");
+        try {
+            let selectedDates = [];
+            const inst = Array.isArray(fpInstance) ? fpInstance[0] : fpInstance;
+            
+            if (inst && inst.selectedDates && inst.selectedDates.length > 0) {
+                selectedDates = inst.selectedDates.map(d => {
+                    const year = d.getFullYear();
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                }).sort();
+            }
+            
+            console.log("Selected dates:", selectedDates);
+            
+            if (selectedDates.length === 0) {
+                alert('候補日をカレンダーから1つ以上選択してください。');
+                return;
+            }
+            const title = document.getElementById('event-title').value.trim() || '無題のイベント';
+            
+            const btn = document.querySelector('#view-create .primary-btn');
+            btn.innerHTML = '⏳ 作成中...';
+            btn.disabled = true;
+
+            const res = await fetch('/api/events', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ title, dates: selectedDates })
+            });
+            
+            if (!res.ok) throw new Error('サーバーエラーが発生しました');
+            
+            const data = await res.json();
+            window.location.href = '/event/' + data.id;
+        } catch (error) {
+            console.error("createEvent error:", error);
+            alert('イベントの作成に失敗しました: ' + error.message);
+            const btn = document.querySelector('#view-create .primary-btn');
+            btn.innerHTML = '🚀 イベントを作成する';
+            btn.disabled = false;
+        }
+    }
+
+    // --- Event View Functions ---
+    async function fetchEventData() {
+        const res = await fetch('/api/events/' + currentEventId);
+        if (res.status === 404) {
+            alert('イベントが見つかりません');
+            window.location.href = '/';
+            return;
+        }
+        const data = await res.json();
+        eventData = data.event;
+        allAnswers = data.answers;
+        document.getElementById('display-title').innerText = eventData.title;
+        
+        if (myName) loadMyAnswers();
+        renderTable();
+        renderParticipants();
+    }
+
+    function loadMyAnswers() {
+        const nameInput = document.getElementById('participant-name').value.trim();
+        if (!nameInput) {
+            alert('名前を入力してください。');
+            return;
+        }
+        myName = nameInput;
+        localStorage.setItem('schedule_name', myName);
+        
+        const existing = allAnswers.find(a => a.participant_name === myName);
+        if (existing) {
+            myAnswers = existing.answers;
+        } else {
+            myAnswers = {};
+        }
+        renderTable();
+    }
+
+    function renderTable() {
+        if (!eventData) return;
+        const table = document.getElementById('schedule-table');
+        let html = '<tr><th>時限 \\ 日付</th>';
+        
+        eventData.dates.forEach(date => {
+            const dateObj = new Date(date);
+            const formatted = `${dateObj.getMonth()+1}/${dateObj.getDate()}`;
+            html += `<th>${formatted}</th>`;
+        });
+        html += '</tr>';
+
+        const heatMap = {};
+        eventData.dates.forEach(date => {
+            heatMap[date] = {};
+            PERIODS.forEach(p => {
+                let okCount = 0, maybeCount = 0, noCount = 0;
+                let okNames = [], maybeNames = [], noNames = [];
+                allAnswers.forEach(a => {
+                    const ans = a.answers[date] && a.answers[date][p];
+                    if (ans === 'ok') { okCount++; okNames.push(a.participant_name); }
+                    else if (ans === 'maybe') { maybeCount++; maybeNames.push(a.participant_name); }
+                    else if (ans === 'no') { noCount++; noNames.push(a.participant_name); }
+                });
+                heatMap[date][p] = { okCount, maybeCount, noCount, okNames, maybeNames, noNames };
+            });
+        });
+
+        const maxAnswers = Math.max(allAnswers.length, 1);
+        const hasAnswered = myName && allAnswers.some(a => a.participant_name === myName);
+
+        PERIODS.forEach(period => {
+            html += `<tr><th>${period}</th>`;
+            eventData.dates.forEach(date => {
+                const myAns = (myAnswers[date] && myAnswers[date][period]) || '';
+                const symbol = ANSWER_SYMBOLS[myAns];
+                let cssColor = '';
+                if(myAns === 'ok') cssColor = 'color: #4CAF50;';
+                if(myAns === 'maybe') cssColor = 'color: #FFC107;';
+                if(myAns === 'no') cssColor = 'color: #F44336;';
+                
+                const data = heatMap[date][period];
+                let heatClass = 'heat-0';
+                let tooltip = '';
+                let aggText = '';
+
+                if (hasAnswered) {
+                    if (data.okCount > 0) {
+                        const ratio = data.okCount / maxAnswers;
+                        if (ratio > 0.8) heatClass = 'heat-max';
+                        else if (ratio > 0.6) heatClass = 'heat-4';
+                        else if (ratio > 0.4) heatClass = 'heat-3';
+                        else if (ratio > 0.2) heatClass = 'heat-2';
+                        else heatClass = 'heat-1';
+                    }
+                    
+                    if(data.okCount > 0) tooltip += `◎: ${data.okNames.join(', ')}\n`;
+                    if(data.maybeCount > 0) tooltip += `△: ${data.maybeNames.join(', ')}\n`;
+                    if(data.noCount > 0) tooltip += `✕: ${data.noNames.join(', ')}\n`;
+
+                    if (allAnswers.length > 0) {
+                        aggText = `<div style="font-size: 0.7rem; color: #555; margin-top: 4px; font-weight: normal;">◎${data.okCount} △${data.maybeCount} ✕${data.noCount}</div>`;
+                    }
+                } else {
+                    if (allAnswers.length > 0) {
+                        aggText = `<div style="font-size: 0.6rem; color: #999; margin-top: 4px; font-weight: normal;">🔒回答後表示</div>`;
+                    }
+                }
+
+                html += `<td class="slot ${heatClass}" title="${tooltip}" onclick="toggleAnswer('${date}', '${period}')">
+                    <div style="min-height: 24px;"><span style="${cssColor}">${symbol}</span></div>
+                    ${aggText}
+                </td>`;
+            });
+            html += '</tr>';
+        });
+
+        table.innerHTML = html;
+    }
+
+    function toggleAnswer(date, period) {
+        if (!myName) {
+            alert('先に名前を入力して「回答開始」を押してください。');
+            document.getElementById('participant-name').focus();
+            return;
+        }
+        
+        if (!myAnswers[date]) myAnswers[date] = {};
+        const current = myAnswers[date][period] || '';
+        const idx = ANSWER_TYPES.indexOf(current);
+        const next = ANSWER_TYPES[(idx + 1) % ANSWER_TYPES.length];
+        
+        myAnswers[date][period] = next;
+        renderTable();
+    }
+
+    async function saveAnswers() {
+        if (!myName) {
+            alert('名前を入力してください。');
+            return;
+        }
+        const btn = document.querySelector('#view-event .primary-btn');
+        btn.innerHTML = '⏳ 保存中...';
+        btn.disabled = true;
+
+        const res = await fetch(`/api/events/${currentEventId}/answers`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ participant_name: myName, answers: myAnswers })
+        });
+        
+        btn.innerHTML = '💾 回答を保存する';
+        btn.disabled = false;
+
+        if (res.ok) {
+            alert('保存しました！');
+            fetchEventData(); 
+        }
+    }
+
+    function renderParticipants() {
+        const container = document.getElementById('participants-container');
+        container.innerHTML = '';
+        if (allAnswers.length === 0) {
+            container.innerHTML = '<p style="color:#888;">まだ誰も回答していません。</p>';
+            return;
+        }
+
+        const hasAnswered = myName && allAnswers.some(a => a.participant_name === myName);
+        if (!hasAnswered) {
+            container.innerHTML = '<p style="color:#888;">🔒 回答を保存すると確認できます。</p>';
+            return;
+        }
+
+        allAnswers.forEach(a => {
+            const badge = document.createElement('span');
+            badge.style.display = 'inline-block';
+            badge.style.padding = '8px 16px';
+            badge.style.borderRadius = '9999px';
+            badge.style.background = '#fff';
+            badge.style.border = '2px solid var(--border-light)';
+            badge.style.margin = '4px';
+            badge.style.fontWeight = 'bold';
+            badge.innerText = a.participant_name;
+            container.appendChild(badge);
+        });
+    }
+
+    function copyUrl() {
+        navigator.clipboard.writeText(window.location.href);
+        alert('URLをコピーしました！LINE等で共有してください。');
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
